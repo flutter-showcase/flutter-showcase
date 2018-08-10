@@ -1,4 +1,4 @@
-package flutter-showcase.app;
+package flutter_showcase.app;
 
 import android.os.Bundle;
 import io.flutter.app.FlutterActivity;
