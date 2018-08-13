@@ -17,6 +17,7 @@ class Project {
     final doc = loadYaml(file.readAsStringSync());
 
     final showcase = doc['flutter_showcase'];
+
     return new Project(
       name: showcase['name'] ?? '',
       description: showcase['description'] ?? '',
@@ -24,12 +25,12 @@ class Project {
       url: showcase['project-url'] ?? '',
       type: showcase['type'] ?? '',
       mainPath: file.parent.path + 'main.dart',
-      tags: (showcase['tags'] ?? '').split(';').where((t) => t.isNotEmpty).map((t) => t.trim())
+      tags: (showcase['tags'] ?? []).where((t) => t.isNotEmpty).map((t) => t.trim())
     );
   }
 
   String toRawDart() {
-    final rawTags = "new List<String>.from([${tags.map((t) => '\"$t\"').join(', ')}])";
+    final rawTags = "[${tags.map((t) => '\"$t\"').join(', ')}]";
 
     return """
     new Project(
