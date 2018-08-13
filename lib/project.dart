@@ -1,22 +1,34 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:yaml/yaml.dart';
 
 class Project {
-  const Project({this.name, this.description, this.author, this.url, this.type, this.mainPath, this.tags});
+  const Project({this.name, this.description, this.author, this.url, this.type, this.relativeMainPath, this.tags, this.id, this.create, this.className});
   
   final String name;
   final String description;
   final String author;
   final String url;
   final String type;
-  final String mainPath;
+  final String relativeMainPath;
+  final String id;
   final List<String> tags;
+  final Function create;
+  final String className;
 
-  factory Project.fromPubspec(File file) {
+  static Future<Project> fromPubspec(File file) async {
     final doc = loadYaml(file.readAsStringSync());
 
     final showcase = doc['flutter_showcase'];
+
+    final relativePath = file.parent.path.substring(file.parent.path.indexOf('user_content/') + 13);
+
+    final mainFile = new File(file.parent.path + '/main.dart');
+    final contents = await mainFile.readAsLines();
+    final appClass = new RegExp(r".*runApp\((.*)\)\);").firstMatch(contents.firstWhere((l) => l.contains(r'.*runApp\(.*\)\);')));
+
+    //runApp(new MyApp())
 
     return new Project(
       name: showcase['name'] ?? '',
@@ -24,8 +36,9 @@ class Project {
       author: showcase['author'] ?? '',
       url: showcase['project-url'] ?? '',
       type: showcase['type'] ?? '',
-      mainPath: file.parent.path + 'main.dart',
-      tags: (showcase['tags'] ?? []).where((t) => t.isNotEmpty).map((t) => t.trim())
+      relativeMainPath: relativePath + '/main.dart',
+      tags: (showcase['tags'] ?? []).where((t) => t.isNotEmpty).map((t) => t.trim()),
+      id: relativePath.replaceAll('/', '_')
     );
   }
 
@@ -39,8 +52,11 @@ class Project {
       author: \"$author\",
       url: \"$url\",
       type: \"$type\",
-      mainPath: \"$mainPath\",
-      tags: $rawTags
+      relativeMainPath: \"$relativeMainPath\",
+      tags: $rawTags,
+      id: \"$id\",
+      create: (navkey) => $id.$className(navkey: navkey),
+      className: \"$className\",
     )
     """;
   }
