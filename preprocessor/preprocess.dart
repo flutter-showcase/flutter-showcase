@@ -63,43 +63,8 @@ class _FlutterShowcaseHomeState extends State<FlutterShowcaseHome> {
 
   final _FlutterShowcaseSearchDelegate _delegate = new _FlutterShowcaseSearchDelegate(_allProjects);
 
-  void launchProject(Project project) {
+  void _launchProject(Project project) {
 
-  }
-
-  Widget createChip({String text}) {
-    return new Padding(
-      padding: const EdgeInsets.all(4.0),
-      child: new Chip(
-        label: new Text(text),
-      ),
-    );
-  }
-
-  Widget projectToCard(Project project) {
-    final tagWidgets = [createChip(text: project.type)]
-    ..addAll(project.tags.map((t) => createChip(text: t)));
-
-    return new Card(
-      child: new Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          new ListTile(
-            title: new Text(project.name),
-            subtitle: new Text(project.description),
-            trailing: new Text(project.author),
-            onTap: () => launchProject(project)
-          ),
-          new Padding(
-            padding: const EdgeInsets.all(6.0),
-            child: new Wrap(
-              children: tagWidgets
-            )
-          )
-        ]
-      )
-    );
   }
 
   @override
@@ -111,7 +76,10 @@ class _FlutterShowcaseHomeState extends State<FlutterShowcaseHome> {
       return (_filters.isEmpty || tags.any((t) => filters.contains(t))) &&
         (_searchText.isEmpty || tags.any((t) => t.contains(_searchText.toLowerCase())));
     })
-    .map((p) => projectToCard(p));
+    .map((p) => new _ProjectCard(
+      project: p,
+      onPressed: () => _launchProject(p),
+    ));
 
     return new Scaffold(
       appBar: new AppBar(
@@ -127,7 +95,7 @@ class _FlutterShowcaseHomeState extends State<FlutterShowcaseHome> {
               );
 
               if (selected != null) {
-                launchProject(selected);
+                _launchProject(selected);
               }
             },
           ),
@@ -147,7 +115,7 @@ class _FlutterShowcaseHomeState extends State<FlutterShowcaseHome> {
 }
 
 class _ProjectTile extends StatelessWidget {
-  _ProjectTile({@required this.project, this.onPressed});
+  _ProjectTile({Key key, @required this.project, this.onPressed}) : super(key: key);
 
   final Project project;
   final Function onPressed;
@@ -159,6 +127,47 @@ class _ProjectTile extends StatelessWidget {
       subtitle: new Text(project.description),
       trailing: new Text(project.author),
       onTap: onPressed
+    );
+  }
+}
+
+class _ProjectCard extends StatelessWidget {
+  const _ProjectCard({Key key, @required this.project, this.onPressed}) : super(key: key);
+
+  final Project project;
+  final Function onPressed;
+
+  Widget createChip({String text}) {
+    return new Padding(
+      padding: const EdgeInsets.all(4.0),
+      child: new Chip(
+        label: new Text(text),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tagWidgets = [createChip(text: project.type)]
+    ..addAll(project.tags.map((t) => createChip(text: t)));
+
+    return new Card(
+      child: new Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          new _ProjectTile(
+            project: project,
+            onPressed: () => onPressed
+          ),
+          new Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6.0),
+            child: new Wrap(
+              children: tagWidgets
+            )
+          )
+        ]
+      )
     );
   }
 }
