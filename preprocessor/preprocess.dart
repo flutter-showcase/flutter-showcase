@@ -12,23 +12,27 @@ void main() async {
 }
 
 Future<List<Project>> getUserProjects() async {
-  var projectsDir = new Directory('user_content');
+  var projectsDir = new Directory('lib/user_content');
 
   final files = await projectsDir.list(recursive: true).toList();
 
-  return files
+  return (await Future.wait(files
     .where((f) => f is File && basename(f.path) == 'pubspec.yaml')
-    .map((f) => new Project.fromPubspec(f))
-    .toList()
+    .map((f) => Project.fromPubspec(f))))
     ..sort((p1, p2) => p1.name.compareTo(p2.name));
 }
 
 void generateMain(List<Project> projects) async {
   final mainFile = new File('lib/main.dart');
 
+  final imports = projects.map((p) {
+    return "import 'package:app/user_content/${p.relativeMainPath}' as ${p.id};";
+  }).join('\r\n');
+
   final fileContents = """
 import 'package:app/project.dart';
 import 'package:flutter/material.dart';
+$imports
 
 void main() => runApp(new MyApp());
 
@@ -59,12 +63,27 @@ class _FlutterShowcaseHomeState extends State<FlutterShowcaseHome> {
 
   String _searchText = '';
 
-  static final List<Project> _allProjects = [${projects.map((p) => p.toRawDart()).join(',\r\n')}];
+  static final List<Project> _allProjects = [
+    ${projects.map((p) => p.toRawDart()).join(',\r\n')}
+  ];
 
   final _FlutterShowcaseSearchDelegate _delegate = new _FlutterShowcaseSearchDelegate(_allProjects);
 
   void _launchProject(Project project) {
+    Navigator.of(context).push(MaterialPageRoute(builder: (c) {
+      GlobalKey<NavigatorState> appkey = GlobalKey<NavigatorState>();
+      return WillPopScope(
+        child: project.create(appkey),
+        onWillPop: () async {
+          if (appkey.currentState.canPop()) {
+            appkey.currentState.pop();
+            return false;
+          }
 
+          return true;
+        },
+      );
+    }));
   }
 
   @override
@@ -158,7 +177,7 @@ class _ProjectCard extends StatelessWidget {
         children: <Widget>[
           new _ProjectTile(
             project: project,
-            onPressed: () => onPressed
+            onPressed: onPressed
           ),
           new Padding(
             padding: const EdgeInsets.symmetric(horizontal: 6.0),

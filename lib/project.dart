@@ -26,9 +26,10 @@ class Project {
 
     final mainFile = new File(file.parent.path + '/main.dart');
     final contents = await mainFile.readAsLines();
-    final appClass = new RegExp(r".*runApp\((.*)\)\);").firstMatch(contents.firstWhere((l) => l.contains(r'.*runApp\(.*\)\);')));
-
-    //runApp(new MyApp())
+    final expression = new RegExp(r'.*runApp\(new (.*)\(\)\);');
+    final appClass = expression
+      .firstMatch(contents.firstWhere((l) => expression.hasMatch(l)))
+      .group(1);
 
     return new Project(
       name: showcase['name'] ?? '',
@@ -38,7 +39,8 @@ class Project {
       type: showcase['type'] ?? '',
       relativeMainPath: relativePath + '/main.dart',
       tags: (showcase['tags'] ?? []).where((t) => t.isNotEmpty).map((t) => t.trim()),
-      id: relativePath.replaceAll('/', '_')
+      id: relativePath.replaceAll('/', '_'),
+      className: appClass
     );
   }
 
@@ -57,7 +59,6 @@ class Project {
       id: \"$id\",
       create: (navkey) => $id.$className(navkey: navkey),
       className: \"$className\",
-    )
-    """;
+    )""";
   }
 }
