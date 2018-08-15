@@ -9,6 +9,7 @@ Either:
 * Build it yourself
     * Get it from git with `git clone https://github.com/flutter-showcase/flutter-showcase.git`
     * Get in the folder with a terminal, and run `flutter packages get`
+    * Run the preprocessor script with `preprocess`
     * Connect your device or Start your emulator
     * run `flutter run --release`
 
