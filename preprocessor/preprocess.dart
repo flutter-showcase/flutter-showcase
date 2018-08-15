@@ -3,8 +3,18 @@ import 'dart:io';
 import 'package:app/project.dart';
 import 'package:path/path.dart';
 
+void logError(String msg) {
+  print('\u{1B}[31m$msg\u{1B}[0m');
+}
+
 void main() async {
-  final projects = await getUserProjects();
+  List<Project> projects;
+  try {
+    projects = await getUserProjects();
+  } on ProjectParseException catch (ex) {
+    logError(ex.message);
+    return;
+  }
 
   generateMain(projects);
 
@@ -297,8 +307,4 @@ String createFilterChips(List<Project> projects) {
     )
   )
   """;
-}
-
-String createListHeader(String name, String icon) {
-  return "new ListTile(leading: const Icon($icon), title: const Text('$name'))";
 }

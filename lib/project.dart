@@ -1,10 +1,27 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:meta/meta.dart';
 import 'package:yaml/yaml.dart';
 
+class ProjectParseException implements Exception {
+  ProjectParseException({ @required this.message });
+
+  final String message;
+}
+
 class Project {
-  const Project({this.name, this.description, this.author, this.url, this.type, this.relativeMainPath, this.tags, this.id, this.create, this.className});
+  const Project({
+    this.name,
+    this.description, 
+    this.author, 
+    this.url, 
+    this.type, 
+    this.relativeMainPath, 
+    this.tags, 
+    this.id, 
+    this.create, 
+    this.className});
   
   final String name;
   final String description;
@@ -18,19 +35,19 @@ class Project {
   final String className;
 
   static Future<Project> fromPubspec(File file) async {
-    final doc = loadYaml(file.readAsStringSync());
+    final mainFile = new File(file.parent.path + '/main.dart');
+    if (!(await mainFile.exists())) {
+      throw new ProjectParseException(message: "No 'main.dart' found in '${file.parent.path}'.");
+    }
 
-    final showcase = doc['flutter_showcase'];
+    final appClass = await determineAppClass(mainFile);
+    if (appClass == null) {
+      throw new ProjectParseException(message: "No 'runApp(...)' line was found in '${mainFile.path}'.");
+    }
 
     final relativePath = file.parent.path.substring(file.parent.path.indexOf('user_content/') + 13);
 
-    final mainFile = new File(file.parent.path + '/main.dart');
-    final contents = await mainFile.readAsLines();
-    final expression = new RegExp(r'.*runApp\(new (.*)\(\)\);');
-    final appClass = expression
-      .firstMatch(contents.firstWhere((l) => expression.hasMatch(l)))
-      .group(1);
-
+    final showcase = loadYaml(await file.readAsString())['flutter_showcase'];
     return new Project(
       name: showcase['name'] ?? '',
       description: showcase['description'] ?? '',
@@ -38,10 +55,19 @@ class Project {
       url: showcase['project-url'] ?? '',
       type: showcase['type'] ?? '',
       relativeMainPath: relativePath + '/main.dart',
-      tags: (showcase['tags'] ?? []).where((t) => t.isNotEmpty).map((t) => t.trim()),
+      tags: (showcase['tags'] ?? []).map((t) => t.trim()).where((t) => t.isNotEmpty),
       id: relativePath.replaceAll('/', '_'),
       className: appClass
     );
+  }
+
+  static Future<String> determineAppClass(File file) async {
+    final contents = await file.readAsLines();
+    final expression = new RegExp(r'.*runApp\(new (.*)\(\)\);');
+
+    final runLine = contents.firstWhere((l) => expression.hasMatch(l), orElse: () => null);
+    
+    return runLine == null ? null : expression.firstMatch(runLine).group(1);    
   }
 
   String toRawDart() {
