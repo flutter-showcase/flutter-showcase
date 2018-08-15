@@ -28,8 +28,8 @@ Future<List<Project>> getUserProjects() async {
   final files = await projectsDir.list(recursive: true).toList();
 
   return (await Future.wait(files
-    .where((f) => f is File && basename(f.path) == 'pubspec.yaml')
-    .map((f) => Project.fromPubspec(f))))
+      .where((f) => f is File && basename(f.path) == 'pubspec.yaml')
+      .map((f) => Project.fromPubspec(f))))
     ..sort((p1, p2) => p1.name.compareTo(p2.name));
 }
 
@@ -38,9 +38,10 @@ List<String> validateProjects(List<Project> projects) {
     if (p.relativeMainPath == null) {
       return arr..add("'${p.name}' - '${p.author}': No 'main.dart' found.");
     }
-    
+
     if (p.className == null) {
-      return arr..add("'${p.name}' - '${p.author}': No 'runApp(...)' line was found.");
+      return arr
+        ..add("'${p.name}' - '${p.author}': No 'runApp(...)' line was found.");
     }
 
     return arr;
@@ -57,6 +58,7 @@ void generateMain(List<Project> projects) async {
   final fileContents = """
 import 'package:app/project.dart';
 import 'package:flutter/material.dart';
+import 'package:floating_bubble/floating_bubble.dart';
 $imports
 
 void main() => runApp(new MyApp());
@@ -98,7 +100,21 @@ class _FlutterShowcaseHomeState extends State<FlutterShowcaseHome> {
     Navigator.of(context).push(MaterialPageRoute(builder: (c) {
       GlobalKey<NavigatorState> appkey = GlobalKey<NavigatorState>();
       return WillPopScope(
-        child: project.create(appkey),
+        child: Stack(
+                  children: <Widget>[
+                    project.create(appkey),
+                    FloatingBubble(
+                      child: PreferredSize(
+                        child: FloatingActionButton(
+                          child: Icon(Icons.exit_to_app),
+                          heroTag: "FloatingButton",
+                          onPressed: () => Navigator.of(context).pop(),
+                        ),
+                        preferredSize: Size(64.0, 64.0),
+                      ),
+                    )
+                  ],
+                ),
         onWillPop: () async {
           if (appkey.currentState.canPop()) {
             appkey.currentState.pop();
