@@ -8,11 +8,12 @@ void logError(String msg) {
 }
 
 void main() async {
-  List<Project> projects;
-  try {
-    projects = await getUserProjects();
-  } on ProjectParseException catch (ex) {
-    logError(ex.message);
+  final projects = await getUserProjects();
+
+  final errors = validateProjects(projects);
+  if (errors.isNotEmpty) {
+    logError("Errors found:");
+    errors.forEach((e) => logError(e));
     return;
   }
 
@@ -30,6 +31,20 @@ Future<List<Project>> getUserProjects() async {
     .where((f) => f is File && basename(f.path) == 'pubspec.yaml')
     .map((f) => Project.fromPubspec(f))))
     ..sort((p1, p2) => p1.name.compareTo(p2.name));
+}
+
+List<String> validateProjects(List<Project> projects) {
+  return projects.fold<List<String>>([], (arr, p) {
+    if (p.relativeMainPath == null) {
+      return arr..add("'${p.name}' - '${p.author}': No 'main.dart' found.");
+    }
+    
+    if (p.className == null) {
+      return arr..add("'${p.name}' - '${p.author}': No 'runApp(...)' line was found.");
+    }
+
+    return arr;
+  });
 }
 
 void generateMain(List<Project> projects) async {

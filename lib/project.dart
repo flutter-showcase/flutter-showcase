@@ -1,14 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:meta/meta.dart';
 import 'package:yaml/yaml.dart';
-
-class ProjectParseException implements Exception {
-  ProjectParseException({ @required this.message });
-
-  final String message;
-}
 
 class Project {
   const Project({
@@ -35,17 +28,16 @@ class Project {
   final String className;
 
   static Future<Project> fromPubspec(File file) async {
-    final mainFile = new File(file.parent.path + '/main.dart');
-    if (!(await mainFile.exists())) {
-      throw new ProjectParseException(message: "No 'main.dart' found in '${file.parent.path}'.");
-    }
-
-    final appClass = await determineAppClass(mainFile);
-    if (appClass == null) {
-      throw new ProjectParseException(message: "No 'runApp(...)' line was found in '${mainFile.path}'.");
-    }
+    String appClass;
+    String mainPath;
 
     final relativePath = file.parent.path.substring(file.parent.path.indexOf('user_content/') + 13);
+    
+    final mainFile = new File(file.parent.path + '/main.dart');
+    if (await mainFile.exists()) {
+      mainPath = relativePath + '/main.dart';
+      appClass = await determineAppClass(mainFile);
+    }
 
     final showcase = loadYaml(await file.readAsString())['flutter_showcase'];
     return new Project(
@@ -54,7 +46,7 @@ class Project {
       author: showcase['author'] ?? '',
       url: showcase['project-url'] ?? '',
       type: showcase['type'] ?? '',
-      relativeMainPath: relativePath + '/main.dart',
+      relativeMainPath: mainPath,
       tags: (showcase['tags'] ?? []).map((t) => t.trim()).where((t) => t.isNotEmpty),
       id: relativePath.replaceAll('/', '_'),
       className: appClass
@@ -83,7 +75,7 @@ class Project {
       relativeMainPath: \"$relativeMainPath\",
       tags: $rawTags,
       id: \"$id\",
-      create: (navkey) => $id.$className(navkey: navkey),
+      create: (navkey) => $id.$className(navkey),
       className: \"$className\",
     )""";
   }
