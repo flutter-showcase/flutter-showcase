@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:app/project.dart';
-import 'package:path/path.dart';
+import 'package:path/path.dart' as p;
 
 void logError(String msg) {
   print('\u{1B}[31m$msg\u{1B}[0m');
@@ -28,7 +28,7 @@ Future<List<Project>> getUserProjects() async {
   final files = await projectsDir.list(recursive: true).toList();
 
   return (await Future.wait(files
-    .where((f) => f is File && basename(f.path) == 'pubspec.yaml')
+    .where((f) => f is File && p.basename(f.path) == 'pubspec.yaml')
     .map((f) => Project.fromPubspec(f))))
     ..sort((p1, p2) => p1.name.compareTo(p2.name));
 }
@@ -48,7 +48,7 @@ List<String> validateProjects(List<Project> projects) {
 }
 
 void generateMain(List<Project> projects) async {
-  final mainFile = new File('lib/main.dart');
+  final mainFile = new File(p.join('lib', 'main.dart'));
 
   final imports = projects.map((p) {
     return "import 'package:app/user_content/${p.relativeMainPath}' as ${p.id};";
