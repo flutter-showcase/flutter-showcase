@@ -71,6 +71,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.1.2"
+  floating_bubble:
+    dependency: "direct main"
+    description:
+      name: floating_bubble
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.0.2"
   flutter:
     dependency: "direct main"
     description: flutter
@@ -368,3 +375,4 @@ packages:
     version: "2.1.13"
 sdks:
   dart: ">=2.0.0-dev.52.0 <=2.0.0-dev.58.0.flutter-f981f09760"
+  flutter: ">=0.5.1 <0.6.0"
