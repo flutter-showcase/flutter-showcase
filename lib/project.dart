@@ -36,7 +36,7 @@ class Project {
     
     final mainFile = new File(p.join(file.parent.path, 'main.dart'));
     if (await mainFile.exists()) {
-      mainPath = p.join(relativePath, 'main.dart');
+      mainPath = (relativePath + '/main.dart').replaceAll("\\", "/");
       appClass = await determineAppClass(mainFile);
     }
 
