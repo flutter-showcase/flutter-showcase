@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:yaml/yaml.dart';
+import 'package:path/path.dart' as p;
 
 class Project {
   const Project({
@@ -31,11 +32,11 @@ class Project {
     String appClass;
     String mainPath;
 
-    final relativePath = file.parent.path.substring(file.parent.path.indexOf('user_content/') + 13);
+    final relativePath = file.parent.path.substring(file.parent.path.indexOf('user_content') + 13);
     
-    final mainFile = new File(file.parent.path + '/main.dart');
+    final mainFile = new File(p.join(file.parent.path, 'main.dart'));
     if (await mainFile.exists()) {
-      mainPath = relativePath + '/main.dart';
+      mainPath = (relativePath + '/main.dart').replaceAll("\\", "/");
       appClass = await determineAppClass(mainFile);
     }
 
@@ -48,7 +49,7 @@ class Project {
       type: showcase['type'] ?? '',
       relativeMainPath: mainPath,
       tags: (showcase['tags'] ?? []).map((t) => t.trim()).where((t) => t.isNotEmpty),
-      id: relativePath.replaceAll('/', '_'),
+      id: relativePath.replaceAll(new RegExp(r'[/\\]'), '_'),
       className: appClass
     );
   }
